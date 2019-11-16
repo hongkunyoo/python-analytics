@@ -11,11 +11,15 @@ app = Flask(__name__)
 @app.route('/', methods=['POST'])
 def hello():
     data = request.get_json()
-    df = pickle.loads(base64.b64decode(data['data'].encode()))
+    encode = data['data'].encode('utf-8')
+    b = base64.b64decode(encode)
+    df = pickle.loads(b)
+    df.reset_index(level=0, inplace=True)
+    df['price'].fillna(0, inplace=True)
 
     truth = pd.read_csv('diamonds_true.csv')
     df['id'] = df.index
-    merge = pd.merge(df, truth, how='inner', on='id', left_index=True, right_index=True)
+    merge = pd.merge(df, truth, how='inner', on='id', left_index=True, right_index=False)
     score = np.sum(np.abs(merge['price_x'] - merge['price_y']))
 
     return str(score)
